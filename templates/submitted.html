@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Submitted — AI Smart Proctor</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .summary-card {
+            max-width: 680px;
+            margin: 3rem auto;
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .success-checkmark {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--success-light);
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1.5rem auto;
+        }
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        .score-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+        .score-box-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .score-box-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        .details-table {
+            width: 100%;
+            text-align: left;
+            margin: 1.5rem 0;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        .details-table td {
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .details-table td:first-child {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="logo-group">
+            <div class="logo-badge">AI</div>
+            <div class="logo-title">Smart Proctor Portal</div>
+        </div>
+    </header>
+
+    <div class="landing-container">
+        <div class="summary-card">
+            <div class="success-checkmark">✓</div>
+            <h1 style="font-size: 1.75rem; margin-bottom: 0.5rem;">Assessment Submitted Successfully</h1>
+            <p style="color: var(--text-muted);">Your answers and proctoring telemetry logs have been securely recorded.</p>
+
+            <div class="score-grid">
+                <div class="score-box">
+                    <div class="score-box-title">Academic Score</div>
+                    <div class="score-box-val" style="color: var(--primary);">
+                        {{ summary.score if summary else 0 }} <span style="font-size: 1rem; color: var(--text-muted);">/ {{ summary.total_marks if summary else 50 }}</span>
+                    </div>
+                </div>
+
+                <div class="score-box">
+                    <div class="score-box-title">Integrity Index</div>
+                    <div class="score-box-val" style="color: {{ '#10b981' if summary and summary.integrity_score >= 85 else ('#f59e0b' if summary and summary.integrity_score >= 70 else '#ef4444') }};">
+                        {{ summary.integrity_score if summary else 100 }}%
+                    </div>
+                </div>
+            </div>
+
+            <table class="details-table">
+                <tr>
+                    <td>Candidate Name</td>
+                    <td><strong>{{ summary.student_name if summary else 'Candidate' }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Roll Number</td>
+                    <td><strong>{{ summary.roll_no if summary else 'N/A' }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Assessment Title</td>
+                    <td>{{ summary.exam_title if summary else 'CSE Core Exam' }}</td>
+                </tr>
+                <tr>
+                    <td>Total Flags Recorded</td>
+                    <td>
+                        <span style="font-weight: 700; color: {{ '#ef4444' if summary and summary.violations_count > 0 else '#10b981' }};">
+                            {{ summary.violations_count if summary else 0 }} Event(s)
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Audit Status</td>
+                    <td>
+                        {% if summary and summary.integrity_score >= 85 %}
+                            <span class="badge-status badge-pass">High Trust (Verified)</span>
+                        {% elif summary and summary.integrity_score >= 70 %}
+                            <span class="badge-status" style="background: #fef3c7; color: #92400e;">Moderate Irregularities</span>
+                        {% else %}
+                            <span class="badge-status badge-fail">Flagged for Manual Review</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+
+            <div class="btn-group">
+                <a href="/" class="btn btn-secondary" style="text-decoration: none;">Take Another Test</a>
+                <a href="/dashboard" class="btn btn-primary" style="text-decoration: none;">Open Faculty Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

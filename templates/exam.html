@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Assessment Session — AI Smart Proctor</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="exam-layout">
+
+    <!-- Top Navigation Bar -->
+    <header class="exam-navbar">
+        <div class="logo-group">
+            <div class="logo-badge">AI</div>
+            <div class="logo-title">Core Foundations Examination</div>
+        </div>
+
+        <div class="timer-box">
+            <span>⏳</span>
+            <span id="timerDisplay">05:00</span>
+        </div>
+
+        <div class="student-info-badge">
+            Session ID: <strong>#{{ submission_id }}</strong>
+        </div>
+    </header>
+
+    <!-- Main Exam Workspace -->
+    <main class="exam-main">
+        <!-- Question Workspace -->
+        <section class="question-area">
+            <div class="question-card">
+                <div class="question-header">
+                    <span id="qNumberDisplay" class="question-num">Question 1 of 5</span>
+                    <span id="qMarksDisplay" class="question-marks">10 Marks</span>
+                </div>
+
+                <div id="qTextDisplay" class="question-text">
+                    Loading question content...
+                </div>
+
+                <div id="optionsContainer" class="options-list">
+                    <!-- Dynamic Options -->
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" id="prevBtn" class="btn btn-secondary" style="width: auto;" disabled>
+                        ← Previous
+                    </button>
+                    <div>
+                        <button type="button" id="nextBtn" class="btn btn-primary" style="width: auto;">
+                            Next Question →
+                        </button>
+                        <button type="button" id="submitBtn" class="btn btn-success" style="width: auto; display: none;">
+                            ✓ Final Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Proctoring HUD Sidebar -->
+        <aside class="proctor-sidebar">
+            <div>
+                <div class="proctor-video-box">
+                    <video id="examVideo" autoplay playsinline muted></video>
+                    <div class="hud-overlay">
+                        <span class="hud-pill hud-live">REC</span>
+                        <span class="hud-pill">AI Vision</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Status Card -->
+            <div class="proctor-status-card">
+                <div class="status-row">
+                    <span class="status-label">Face Visibility:</span>
+                    <span id="hudFaceStatus" class="status-val val-ok">1 Face (OK)</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Head Pose / Gaze:</span>
+                    <span id="hudGazeStatus" class="status-val val-ok">Direct (OK)</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Integrity Index:</span>
+                    <span id="hudIntegrityScore" class="status-val val-ok">100%</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Anomalies Logged:</span>
+                    <span id="hudViolationsCount" class="status-val">0</span>
+                </div>
+            </div>
+
+            <!-- Question Palette -->
+            <div class="palette-container">
+                <div class="palette-title">Question Navigator</div>
+                <div id="paletteGrid" class="palette-grid">
+                    <!-- Buttons generated dynamically -->
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Violation Warning Modal Popup -->
+    <div id="alertModal" class="alert-modal-backdrop">
+        <div class="alert-box">
+            <div class="alert-icon">⚠️</div>
+            <div id="alertModalTitle" class="alert-title">Integrity Alert</div>
+            <div id="alertModalDesc" class="alert-desc">An integrity irregularity was detected.</div>
+            <div id="alertModalCount" class="alert-count">Warning 1 of 5</div>
+            <button type="button" id="dismissAlertBtn" class="btn btn-primary">
+                I Understand, Return to Exam
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/exam.js"></script>
+    <script src="/static/js/proctor.js"></script>
+</body>
+</html>

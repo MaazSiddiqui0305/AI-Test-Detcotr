@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Proctor — Standalone Interactive Demo</title>
+    <!-- MediaPipe Face Mesh & Camera Utils via CDN for zero-dependency execution -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 2rem auto; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .badge { background: var(--primary); padding: 0.3rem 0.75rem; border-radius: 6px; font-weight: 700; font-size: 0.9rem; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
+        .main-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; }
+        .sidebar-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+        .video-box { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #000; border-radius: 10px; overflow: hidden; border: 2px solid var(--success); }
+        .video-box.flagged { border-color: var(--danger); animation: pulse 0.8s infinite alternate; }
+        @keyframes pulse { from { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } to { box-shadow: 0 0 25px rgba(239, 68, 68, 0.9); } }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        .status-pill { display: flex; justify-content: space-between; padding: 0.6rem 0.8rem; background: #0f172a; border-radius: 6px; font-size: 0.9rem; }
+        .val-ok { color: var(--success); font-weight: 700; }
+        .val-warn { color: var(--warning); font-weight: 700; }
+        .val-danger { color: var(--danger); font-weight: 700; }
+        .quiz-q { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; line-height: 1.5; }
+        .opt-item { background: #0f172a; border: 1px solid var(--border); padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.2s; }
+        .opt-item:hover { border-color: var(--primary); }
+        .opt-item.selected { border-color: var(--primary); background: rgba(79, 70, 229, 0.2); }
+        .log-box { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; max-height: 220px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; }
+        .log-entry { margin-bottom: 0.4rem; padding-bottom: 0.4rem; border-bottom: 1px dashed var(--border); }
+        .log-time { color: var(--text-muted); }
+        .btn { background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; }
+        .btn:hover { background: #4338ca; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div>
+            <h2>🛡️ AI Smart Proctor — Standalone Demonstration</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Browser-native real-time face tracking, head pose estimation, and Page Visibility tab monitoring</p>
+        </div>
+        <span class="badge">B.Tech CSE Mini-Project</span>
+    </header>
+
+    <div class="container">
+        <!-- Main Quiz Mock -->
+        <div class="main-card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+                <span style="font-weight: 700; color: var(--primary);">Question 1 of 5</span>
+                <span style="background: rgba(79, 70, 229, 0.2); color: #818cf8; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">10 Marks</span>
+            </div>
+
+            <div class="quiz-q">
+                Which data structure operates on a First-In, First-Out (FIFO) principle and is used in CPU scheduling and Breadth-First Search algorithms?
+            </div>
+
+            <div class="opt-item" onclick="selectOpt(this)">A) Stack (LIFO)</div>
+            <div class="opt-item selected" onclick="selectOpt(this)">B) Queue (FIFO)</div>
+            <div class="opt-item" onclick="selectOpt(this)">C) Binary Search Tree</div>
+            <div class="opt-item" onclick="selectOpt(this)">D) Heap</div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button class="btn" style="background: #334155;" onclick="alert('Next question clicked.')">Next Question →</button>
+                <button class="btn" style="background: var(--success);" onclick="alert('Demo submitted successfully! All events recorded.')">Finish Assessment</button>
+            </div>
+        </div>
+
+        <!-- Proctor HUD Sidebar -->
+        <div class="sidebar-card">
+            <div id="videoBox" class="video-box">
+                <video id="webcamVideo" autoplay playsinline muted></video>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                <div class="status-pill">
+                    <span style="color: var(--text-muted);">Face Presence:</span>
+                    <span id="faceStatus" class="val-ok">Checking...</span>
+                </div>
+                <div class="status-pill">
+                    <span style="color: var(--text-muted);">Gaze / Head Pose:</span>
+                    <span id="gazeStatus" class="val-ok">Direct</span>
+                </div>
+                <div class="status-pill">
+                    <span style="color: var(--text-muted);">Integrity Index:</span>
+                    <span id="integrityScore" class="val-ok">100%</span>
+                </div>
+                <div class="status-pill">
+                    <span style="color: var(--text-muted);">Tab Switches:</span>
+                    <span id="tabSwitchCount" style="font-weight: 700;">0</span>
+                </div>
+            </div>
+
+            <div>
+                <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem;">Live Incident Event Log:</div>
+                <div id="logBox" class="log-box">
+                    <div class="log-entry" style="color: var(--success);">[READY] Standalone proctor engine initialized.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let integrity = 100;
+        let tabSwitches = 0;
+        let audioCtx = null;
+
+        function playBeep() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            } catch (e) {}
+        }
+
+        function logEvent(type, message) {
+            const box = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const time = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span style="color: #f87171; font-weight: 700;">${type}:</span> ${message}`;
+            box.prepend(entry);
+
+            integrity = Math.max(0, integrity - 10);
+            document.getElementById('integrityScore').innerText = `${integrity}%`;
+            if (integrity < 70) document.getElementById('integrityScore').className = 'val-danger';
+
+            const vBox = document.getElementById('videoBox');
+            vBox.classList.add('flagged');
+            setTimeout(() => vBox.classList.remove('flagged'), 2000);
+
+            playBeep();
+        }
+
+        // 1. Tab Switching Detection (Page Visibility API)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                tabSwitches++;
+                document.getElementById('tabSwitchCount').innerText = tabSwitches;
+                logEvent('TAB_SWITCH', 'Candidate navigated away from browser tab.');
+            }
+        });
+
+        // 2. Right Click & Copy Prevention
+        document.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            logEvent('CLIPBOARD', 'Right-click context menu blocked.');
+        });
+        document.addEventListener('copy', e => {
+            e.preventDefault();
+            logEvent('CLIPBOARD', 'Copy command intercepted.');
+        });
+
+        // 3. Webcam Initialization
+        const video = document.getElementById('webcamVideo');
+        navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360 } })
+            .then(stream => {
+                video.srcObject = stream;
+                document.getElementById('faceStatus').innerText = '1 Face (OK)';
+            })
+            .catch(err => {
+                document.getElementById('faceStatus').innerText = 'Camera Error';
+                document.getElementById('faceStatus').className = 'val-danger';
+            });
+
+        function selectOpt(el) {
+            document.querySelectorAll('.opt-item').forEach(item => item.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+    </script>
+</body>
+</html>

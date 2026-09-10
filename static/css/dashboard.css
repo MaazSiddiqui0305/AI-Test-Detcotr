@@ -1,0 +1,325 @@
+:root {
+    --dash-primary: #4f46e5;
+    --dash-bg: #0f172a;
+    --dash-surface: #1e293b;
+    --dash-card: #1e293b;
+    --dash-border: #334155;
+    --dash-text: #f8fafc;
+    --dash-text-muted: #94a3b8;
+    --dash-success: #10b981;
+    --dash-warning: #f59e0b;
+    --dash-danger: #ef4444;
+}
+
+body.dashboard-body {
+    background: #090d16;
+    color: var(--dash-text);
+    min-height: 100vh;
+}
+
+.dash-header {
+    background: #0f172a;
+    border-bottom: 1px solid var(--dash-border);
+    padding: 1.25rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dash-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+/* Metrics Grid */
+.metrics-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: var(--dash-surface);
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.metric-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--dash-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.metric-sub {
+    font-size: 0.8rem;
+    color: var(--dash-text-muted);
+    margin-top: 0.5rem;
+}
+
+/* Data Table Container */
+.dash-card {
+    background: var(--dash-surface);
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+.dash-card-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--dash-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.dash-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.dash-search-input {
+    background: #0f172a;
+    border: 1px solid var(--dash-border);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    width: 260px;
+    outline: none;
+}
+
+.dash-search-input:focus {
+    border-color: var(--dash-primary);
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.dash-table th {
+    background: #141f32;
+    color: var(--dash-text-muted);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--dash-border);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dash-table td {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid #243044;
+    vertical-align: middle;
+}
+
+.dash-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Integrity Progress Bar */
+.integrity-meter {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.meter-track {
+    flex: 1;
+    height: 8px;
+    background: #334155;
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 80px;
+}
+
+.meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.meter-high { background: var(--dash-success); }
+.meter-med { background: var(--dash-warning); }
+.meter-low { background: var(--dash-danger); }
+
+/* Badges */
+.dash-badge {
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.badge-trust {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-suspicious {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-flagged {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-inspect {
+    background: var(--dash-primary);
+    color: white;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-inspect:hover {
+    background: #4338ca;
+}
+
+/* Violation Audit Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-container {
+    background: var(--dash-surface);
+    border: 1px solid var(--dash-border);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 860px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--dash-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 1.75rem;
+    overflow-y: auto;
+}
+
+.timeline {
+    position: relative;
+    border-left: 2px solid var(--dash-border);
+    margin-left: 1rem;
+    padding-left: 1.5rem;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.75rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.95rem;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--dash-danger);
+    border: 2px solid var(--dash-surface);
+}
+
+.timeline-time {
+    font-size: 0.8rem;
+    color: var(--dash-text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.timeline-type {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #f87171;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-desc {
+    font-size: 0.9rem;
+    color: var(--dash-text);
+    margin-bottom: 0.75rem;
+}
+
+.snapshot-thumb {
+    max-width: 240px;
+    border-radius: 8px;
+    border: 1px solid var(--dash-border);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.snapshot-thumb:hover {
+    transform: scale(1.03);
+}
+
+.btn-close-modal {
+    background: transparent;
+    border: none;
+    color: var(--dash-text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+}

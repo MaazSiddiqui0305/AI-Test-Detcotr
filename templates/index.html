@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Proctor — Registration & System Diagnostics</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="logo-group">
+            <div class="logo-badge">AI</div>
+            <div class="logo-title">Smart Proctor Portal</div>
+        </div>
+        <span class="system-tag">v2.4 Active Monitoring</span>
+    </header>
+
+    <div class="landing-container">
+        <div class="welcome-hero">
+            <h1>Automated Proctored Assessment</h1>
+            <p>Please register with your college credentials and verify your webcam hardware readiness.</p>
+        </div>
+
+        <div class="registration-grid">
+            <!-- Registration Form -->
+            <div class="card">
+                <h2>📝 Candidate Registration</h2>
+                <form id="registrationForm">
+                    <div class="form-group">
+                        <label for="studentName">Full Name</label>
+                        <input type="text" id="studentName" class="form-control" placeholder="e.g. Alex Sharma" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="studentRoll">College Roll / Registration No.</label>
+                        <input type="text" id="studentRoll" class="form-control" placeholder="e.g. 23CSE042" required style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="studentEmail">College Email</label>
+                        <input type="email" id="studentEmail" class="form-control" placeholder="alex@college.edu">
+                    </div>
+
+                    <div class="rules-notice">
+                        <strong>⚠️ Security & Ethics Protocol:</strong>
+                        <ul style="margin-left: 1.2rem; margin-top: 0.4rem; line-height: 1.4;">
+                            <li>Browser must remain in Fullscreen mode.</li>
+                            <li>Switching tabs or minimizing windows will trigger an immediate penalty.</li>
+                            <li>Webcam AI monitors continuous face visibility and gaze direction.</li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" id="startExamBtn" class="btn btn-primary" style="margin-top: 1.5rem;" disabled>
+                        <span>Request Camera & Start Exam</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Hardware Readiness Diagnostics -->
+            <div class="card">
+                <h2>🎥 Hardware & Environment Check</h2>
+                <div class="hardware-preview-box">
+                    <video id="setupVideo" autoplay playsinline muted></video>
+                    <div id="cameraPrompt" class="camera-placeholder">
+                        Click "Request Camera" or wait for browser permission prompt...
+                    </div>
+                </div>
+
+                <ul class="checks-list">
+                    <li class="check-item">
+                        <span>Webcam Feed Status</span>
+                        <span id="camStatusBadge" class="badge-status badge-pending">Checking...</span>
+                    </li>
+                    <li class="check-item">
+                        <span>Page Visibility API (Tab Monitor)</span>
+                        <span id="tabApiBadge" class="badge-status badge-pass">Supported</span>
+                    </li>
+                    <li class="check-item">
+                        <span>Fullscreen Lock Support</span>
+                        <span id="fullscreenBadge" class="badge-status badge-pass">Supported</span>
+                    </li>
+                    <li class="check-item">
+                        <span>AI Face Mesh Compatibility</span>
+                        <span id="aiCompatBadge" class="badge-status badge-pass">Ready</span>
+                    </li>
+                </ul>
+
+                <button type="button" id="grantCamBtn" class="btn btn-secondary">
+                    📸 Grant / Test Camera Access
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cameraReady = false;
+        const form = document.getElementById('registrationForm');
+        const startBtn = document.getElementById('startExamBtn');
+        const grantCamBtn = document.getElementById('grantCamBtn');
+        const setupVideo = document.getElementById('setupVideo');
+        const cameraPrompt = document.getElementById('cameraPrompt');
+        const camStatusBadge = document.getElementById('camStatusBadge');
+
+        async function activateCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 480, height: 360, facingMode: 'user' },
+                    audio: false
+                });
+                setupVideo.srcObject = stream;
+                cameraPrompt.style.display = 'none';
+                camStatusBadge.innerText = 'Connected';
+                camStatusBadge.className = 'badge-status badge-pass';
+                cameraReady = true;
+                validateForm();
+            } catch (err) {
+                console.error("Camera denied:", err);
+                cameraPrompt.innerText = '⚠️ Camera permission denied or device not found.';
+                camStatusBadge.innerText = 'Denied';
+                camStatusBadge.className = 'badge-status badge-fail';
+                cameraReady = false;
+                validateForm();
+            }
+        }
+
+        function validateForm() {
+            const name = document.getElementById('studentName').value.trim();
+            const roll = document.getElementById('studentRoll').value.trim();
+            startBtn.disabled = !(name && roll && cameraReady);
+        }
+
+        document.getElementById('studentName').addEventListener('input', validateForm);
+        document.getElementById('studentRoll').addEventListener('input', validateForm);
+        grantCamBtn.addEventListener('click', activateCamera);
+
+        // Auto attempt camera on load
+        window.addEventListener('DOMContentLoaded', () => {
+            activateCamera();
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('studentName').value.trim();
+            const roll_no = document.getElementById('studentRoll').value.trim();
+            const email = document.getElementById('studentEmail').value.trim();
+
+            try {
+                startBtn.disabled = true;
+                startBtn.innerText = 'Initializing Secure Session...';
+
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, roll_no, email })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = `/exam?submission_id=${data.submission_id}`;
+                } else {
+                    alert(data.error || 'Registration failed.');
+                    startBtn.disabled = false;
+                    startBtn.innerText = 'Start Proctored Exam';
+                }
+            } catch (err) {
+                console.error("Registration error:", err);
+                alert("Network connection error. Ensure local server is running.");
+                startBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

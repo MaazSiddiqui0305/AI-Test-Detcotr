@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Proctoring Dashboard — AI Smart Proctor</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body class="dashboard-body">
+
+    <!-- Top Header -->
+    <header class="dash-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <span style="background: #4f46e5; color: #fff; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 8px;">AI</span>
+            <span style="font-size: 1.25rem; font-weight: 700;">Faculty Proctoring & Integrity Center</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <a href="/" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">+ New Student Session</a>
+            <span class="dash-badge badge-trust">System Active</span>
+        </div>
+    </header>
+
+    <div class="dash-container">
+        <!-- Metric KPI Cards -->
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-header">Total Candidates</div>
+                <div id="metricTotalStudents" class="metric-value">0</div>
+                <div class="metric-sub">Completed or active tests</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">Class Average Score</div>
+                <div id="metricAvgScore" class="metric-value">0 / 50</div>
+                <div class="metric-sub">Mean academic performance</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">Mean Integrity Index</div>
+                <div id="metricAvgIntegrity" class="metric-value">100%</div>
+                <div class="metric-sub">Average honesty score</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">Flagged Sessions</div>
+                <div id="metricFlagged" class="metric-value" style="color: #f87171;">0</div>
+                <div class="metric-sub">Integrity score &lt; 75%</div>
+            </div>
+        </div>
+
+        <!-- Student Submissions Table -->
+        <div class="dash-card">
+            <div class="dash-card-header">
+                <div class="dash-card-title">Candidate Assessment Records</div>
+                <input type="text" id="searchInput" class="dash-search-input" placeholder="Search by name or roll no...">
+            </div>
+
+            <div class="table-responsive">
+                <table class="dash-table" id="submissionsTable">
+                    <thead>
+                        <tr>
+                            <th>Candidate Details</th>
+                            <th>Examination</th>
+                            <th>Score</th>
+                            <th>Integrity Index</th>
+                            <th>Violations</th>
+                            <th>Trust Level</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissionsBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                                Loading candidate submissions...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Evidence Modal -->
+    <div id="auditModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalCandidateInfo" style="font-size: 1.15rem;">Candidate Audit Logs</h3>
+                <button id="closeModalBtn" class="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="auditTimeline" class="timeline">
+                    <!-- Dynamic timeline items -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
