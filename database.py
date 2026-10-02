@@ -169,6 +169,13 @@ def get_questions_for_exam(exam_id=1):
         ORDER BY id ASC
     ''', (exam_id,))
     rows = cursor.fetchall()
+    if not rows:
+        cursor.execute('''
+            SELECT id, question_text, option_a, option_b, option_c, option_d, marks
+            FROM questions
+            ORDER BY id ASC
+        ''')
+        rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
 
@@ -226,10 +233,14 @@ def submit_exam_answers(submission_id, user_answers):
     total_score = 0
     total_questions = len(questions)
 
+    answers_dict = user_answers if isinstance(user_answers, dict) else {}
+
     for q in questions:
         q_id = str(q['id'])
-        chosen = user_answers.get(q_id, '').strip().upper()
-        if chosen == q['correct_option'].strip().upper():
+        raw_val = answers_dict.get(q_id)
+        chosen = str(raw_val).strip().upper() if raw_val is not None else ''
+        correct = str(q['correct_option']).strip().upper() if q['correct_option'] is not None else ''
+        if chosen and chosen == correct:
             total_score += q['marks']
 
     cursor.execute('''
@@ -251,11 +262,14 @@ def get_submission_summary(submission_id):
     cursor.execute('''
         SELECT s.id, s.score, s.total_questions, s.integrity_score, s.violations_count, s.status,
                s.started_at, s.submitted_at,
-               st.name as student_name, st.roll_no, st.email,
-               e.title as exam_title, e.total_marks
+               COALESCE(st.name, 'Candidate') as student_name,
+               COALESCE(st.roll_no, 'N/A') as roll_no,
+               COALESCE(st.email, '') as email,
+               COALESCE(e.title, 'CSE Core Exam') as exam_title,
+               COALESCE(e.total_marks, 50) as total_marks
         FROM submissions s
-        JOIN students st ON s.student_id = st.id
-        JOIN exams e ON s.exam_id = e.id
+        LEFT JOIN students st ON s.student_id = st.id
+        LEFT JOIN exams e ON s.exam_id = e.id
         WHERE s.id = ?
     ''', (submission_id,))
     row = cursor.fetchone()
@@ -268,11 +282,14 @@ def get_all_dashboard_submissions():
     cursor.execute('''
         SELECT s.id, s.score, s.total_questions, s.integrity_score, s.violations_count, s.status,
                s.started_at, s.submitted_at,
-               st.name as student_name, st.roll_no, st.email,
-               e.title as exam_title, e.total_marks
+               COALESCE(st.name, 'Candidate') as student_name,
+               COALESCE(st.roll_no, 'N/A') as roll_no,
+               COALESCE(st.email, '') as email,
+               COALESCE(e.title, 'CSE Core Exam') as exam_title,
+               COALESCE(e.total_marks, 50) as total_marks
         FROM submissions s
-        JOIN students st ON s.student_id = st.id
-        JOIN exams e ON s.exam_id = e.id
+        LEFT JOIN students st ON s.student_id = st.id
+        LEFT JOIN exams e ON s.exam_id = e.id
         ORDER BY s.id DESC
     ''')
     rows = cursor.fetchall()

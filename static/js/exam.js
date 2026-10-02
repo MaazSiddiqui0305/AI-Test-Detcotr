@@ -198,25 +198,35 @@ function startTimer() {
 
 // ==================== ANTI-CHEAT SECURITY CONTROLS ====================
 
+let lastTabSwitchTimestamp = 0;
+
 function initAntiCheatListeners(submissionId) {
     // 1. Tab Switch Detection (HTML5 Page Visibility API)
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            triggerViolation(
-                submissionId,
-                'TAB_SWITCH',
-                'Tab switched or browser minimized during active examination.'
-            );
+            const now = Date.now();
+            if (now - lastTabSwitchTimestamp > 2000) {
+                lastTabSwitchTimestamp = now;
+                triggerViolation(
+                    submissionId,
+                    'TAB_SWITCH',
+                    'Tab switched or browser minimized during active examination.'
+                );
+            }
         }
     });
 
     // 2. Window Blur (e.g. alt-tabbing or clicking outside)
     window.addEventListener('blur', () => {
-        triggerViolation(
-            submissionId,
-            'TAB_SWITCH',
-            'Candidate switched away from the active exam window.'
-        );
+        const now = Date.now();
+        if (now - lastTabSwitchTimestamp > 2000) {
+            lastTabSwitchTimestamp = now;
+            triggerViolation(
+                submissionId,
+                'TAB_SWITCH',
+                'Candidate switched away from the active exam window.'
+            );
+        }
     });
 
     // 3. Fullscreen Exit Detection

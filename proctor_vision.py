@@ -1,6 +1,7 @@
 import os
 import time
 import base64
+import threading
 import numpy as np
 from io import BytesIO
 from PIL import Image
@@ -9,6 +10,9 @@ from PIL import Image
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOADS_DIR = os.path.join(CURRENT_DIR, 'static', 'uploads')
 os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+# Vision Lock for MediaPipe C++ thread-safety in Flask
+vision_lock = threading.Lock()
 
 # Flags for optional vision packages
 HAS_CV2 = False
@@ -26,11 +30,18 @@ try:
 except ImportError:
     pass
 
+# Initialize OpenCV Haar Cascade once globally if available
+face_cascade = None
+if HAS_CV2:
+    try:
+        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        face_cascade = cv2.CascadeClassifier(cascade_path)
+    except Exception as e:
+        print(f"[Vision Engine] OpenCV CascadeClassifier init warning: {e}")
+
 # Initialize MediaPipe Face Mesh if available
 mp_face_mesh = None
-mp_face_detection = None
 face_mesh = None
-face_detector = None
 
 if HAS_MEDIAPIPE:
     try:
@@ -39,11 +50,6 @@ if HAS_MEDIAPIPE:
             static_image_mode=True,
             max_num_faces=4,
             refine_landmarks=True,
-            min_detection_confidence=0.5
-        )
-        mp_face_detection = mp.solutions.face_detection
-        face_detector = mp_face_detection.FaceDetection(
-            model_selection=0,
             min_detection_confidence=0.5
         )
     except Exception as e:
@@ -55,8 +61,14 @@ TRACKING_SESSIONS = {}
 
 def decode_base64_image(base64_str):
     """Decodes a data URL base64 image into RGB numpy array and PIL Image."""
+    if not base64_str or not isinstance(base64_str, str):
+        raise ValueError("Invalid base64 image string provided.")
     if ',' in base64_str:
         base64_str = base64_str.split(',', 1)[1]
+    # Ensure proper base64 padding
+    missing_padding = len(base64_str) % 4
+    if missing_padding:
+        base64_str += '=' * (4 - missing_padding)
     image_bytes = base64.b64decode(base64_str)
     pil_img = Image.open(BytesIO(image_bytes)).convert('RGB')
     np_img = np.array(pil_img)
@@ -64,13 +76,17 @@ def decode_base64_image(base64_str):
 
 def save_violation_snapshot(pil_img, submission_id, violation_type):
     """Saves a compressed JPEG snapshot for visual audit evidence."""
+    if not pil_img:
+        return None
     timestamp_str = int(time.time() * 1000)
-    filename = f"viol_{submission_id}_{violation_type.lower()}_{timestamp_str}.jpg"
+    v_type_str = str(violation_type or 'unspecified').lower()
+    filename = f"viol_{submission_id}_{v_type_str}_{timestamp_str}.jpg"
     filepath = os.path.join(UPLOADS_DIR, filename)
     try:
         # Resize snapshot slightly to save disk space
-        pil_img.thumbnail((480, 360))
-        pil_img.save(filepath, "JPEG", quality=75)
+        copy_img = pil_img.copy()
+        copy_img.thumbnail((480, 360))
+        copy_img.save(filepath, "JPEG", quality=75)
         return filename
     except Exception as e:
         print(f"[Vision] Snapshot save error: {e}")
@@ -92,13 +108,14 @@ def analyze_frame(submission_id, base64_str):
         'snapshot_filename': str | None
       }
     """
-    if submission_id not in TRACKING_SESSIONS:
-        TRACKING_SESSIONS[submission_id] = {
+    sub_key = str(submission_id)
+    if sub_key not in TRACKING_SESSIONS:
+        TRACKING_SESSIONS[sub_key] = {
             'consecutive_away': 0,
             'consecutive_missing': 0,
             'consecutive_multi': 0
         }
-    session = TRACKING_SESSIONS[submission_id]
+    session = TRACKING_SESSIONS[sub_key]
 
     try:
         np_img, pil_img = decode_base64_image(base64_str)
@@ -115,17 +132,18 @@ def analyze_frame(submission_id, base64_str):
     violation_type = None
     description = None
     snapshot_filename = None
+    vision_processed = False
 
     # 1. Analyze with MediaPipe Face Mesh if available
     if HAS_MEDIAPIPE and face_mesh is not None:
         try:
-            results = face_mesh.process(np_img)
-            if results.multi_face_landmarks:
+            with vision_lock:
+                results = face_mesh.process(np_img)
+            if results and results.multi_face_landmarks:
                 face_count = len(results.multi_face_landmarks)
                 
                 # Check head orientation on primary face
                 primary_face = results.multi_face_landmarks[0]
-                h, w, _ = np_img.shape
 
                 # Key 2D landmarks (normalized coordinates)
                 # Nose tip: 1, Left cheek/eye: 234, Right cheek/eye: 454, Forehead: 10, Chin: 152
@@ -160,18 +178,19 @@ def analyze_frame(submission_id, base64_str):
             else:
                 face_count = 0
                 gaze_direction = 'UNKNOWN'
+            vision_processed = True
         except Exception as e:
             print(f"[Vision] MediaPipe processing error: {e}")
+            vision_processed = False
 
-    # 2. Fallback to OpenCV Haar Cascade if MediaPipe is unavailable but OpenCV exists
-    elif HAS_CV2:
+    # 2. Fallback to OpenCV Haar Cascade if MediaPipe was unavailable or failed
+    if not vision_processed and HAS_CV2 and face_cascade is not None:
         try:
             gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
-            cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-            face_cascade = cv2.CascadeClassifier(cascade_path)
             faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5, minSize=(60, 60))
             face_count = len(faces)
             gaze_direction = 'CENTER' if face_count > 0 else 'UNKNOWN'
+            vision_processed = True
         except Exception as e:
             print(f"[Vision] OpenCV fallback error: {e}")
 

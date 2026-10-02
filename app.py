@@ -158,13 +158,13 @@ def api_submit_exam():
 def api_dashboard_data():
     submissions = get_all_dashboard_submissions()
     total_students = len(submissions)
-    total_score = sum(s['score'] for s in submissions) if total_students else 0
+    total_score = sum((s['score'] or 0) for s in submissions) if total_students else 0
     avg_score = round(total_score / total_students, 1) if total_students else 0
     
-    total_integrity = sum(s['integrity_score'] for s in submissions) if total_students else 0
+    total_integrity = sum((s['integrity_score'] if s['integrity_score'] is not None else 100) for s in submissions) if total_students else 0
     avg_integrity = round(total_integrity / total_students, 1) if total_students else 100
 
-    flagged_sessions = sum(1 for s in submissions if s['integrity_score'] < 75)
+    flagged_sessions = sum(1 for s in submissions if (s['integrity_score'] is not None and s['integrity_score'] < 75))
 
     return jsonify({
         'success': True,
@@ -193,8 +193,8 @@ def serve_upload(filename):
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print(" 🚀 AI-Assisted Smart Exam Proctoring System")
+    print(" [AI-PROCTOR] Smart Exam Proctoring System")
     print(" Local server running at: http://127.0.0.1:5000")
     print(" Instructor Dashboard:    http://127.0.0.1:5000/dashboard")
     print("="*60 + "\n")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
