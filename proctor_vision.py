@@ -8,10 +8,15 @@ from PIL import Image
 
 # Directories
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOADS_DIR = os.path.join(CURRENT_DIR, 'static', 'uploads')
+IS_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
+
+if IS_VERCEL:
+    UPLOADS_DIR = '/tmp/uploads'
+else:
+    UPLOADS_DIR = os.path.join(CURRENT_DIR, 'static', 'uploads')
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
-# Vision Lock for MediaPipe C++ thread-safety in Flask
+# Vision Lock for thread-safety in Flask
 vision_lock = threading.Lock()
 
 # Flags for optional vision packages
@@ -33,11 +38,20 @@ except ImportError:
 # Initialize OpenCV Haar Cascade once globally if available
 face_cascade = None
 if HAS_CV2:
-    try:
-        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-        face_cascade = cv2.CascadeClassifier(cascade_path)
-    except Exception as e:
-        print(f"[Vision Engine] OpenCV CascadeClassifier init warning: {e}")
+    cascade_candidates = [
+        os.path.join(CURRENT_DIR, 'models', 'haarcascade_frontalface_default.xml'),
+        os.path.join(getattr(cv2, 'data', None).haarcascades if hasattr(cv2, 'data') else '', 'haarcascade_frontalface_default.xml')
+    ]
+    for cp in cascade_candidates:
+        if cp and os.path.exists(cp):
+            try:
+                face_cascade = cv2.CascadeClassifier(cp)
+                if not face_cascade.empty():
+                    break
+            except Exception:
+                pass
+    if face_cascade is None or face_cascade.empty():
+        print("[Vision Engine] Warning: Haar cascade model could not be initialized.")
 
 # Initialize MediaPipe Face Mesh if available
 mp_face_mesh = None

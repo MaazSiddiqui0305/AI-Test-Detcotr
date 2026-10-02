@@ -189,6 +189,10 @@ def api_submission_violations(submission_id):
 
 @app.route('/uploads/<filename>')
 def serve_upload(filename):
+    if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
+        if os.path.exists('/tmp/uploads'):
+            return send_from_directory('/tmp/uploads', filename)
+        return jsonify({'error': 'File not found'}), 404
     return send_from_directory(os.path.join(app.static_folder, 'uploads'), filename)
 
 if __name__ == '__main__':

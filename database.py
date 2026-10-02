@@ -3,7 +3,20 @@ import os
 import json
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'proctor.db')
+import shutil
+
+IS_VERCEL = bool(os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_NAME'))
+
+if IS_VERCEL:
+    DB_PATH = '/tmp/proctor.db'
+    source_db = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'proctor.db')
+    if not os.path.exists(DB_PATH) and os.path.exists(source_db):
+        try:
+            shutil.copyfile(source_db, DB_PATH)
+        except Exception:
+            pass
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'proctor.db')
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
